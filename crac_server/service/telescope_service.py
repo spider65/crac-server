@@ -10,7 +10,7 @@ from crac_protobuf.telescope_pb2 import (
 from crac_protobuf.telescope_pb2_grpc import (
     TelescopeServicer,
 )
-from crac_server.component.button_control import DOME_LIGHT, FLAT_LIGHT, TELE_SWITCH
+from crac_server.component.button_control import SWITCHES
 from crac_server.config import Config
 
 
@@ -22,7 +22,7 @@ class TelescopeService(TelescopeServicer):
     def SetAction(self, request, context):
         logger.info("Request " + str(request))
         if (
-                TELE_SWITCH.get_status() is ButtonStatus.OFF and
+                SWITCHES["TELE_SWITCH"].get_status() is ButtonStatus.OFF and
                 request.action is not TelescopeAction.SYNC
             ):
             return TelescopeResponse(
@@ -31,16 +31,16 @@ class TelescopeService(TelescopeServicer):
                 sync=False
             )
         elif request.action is TelescopeAction.SYNC:
-            TELE_SWITCH.on()
+            SWITCHES["TELE_SWITCH"].on()
             TELESCOPE.sync()
         elif (
                 request.action is TelescopeAction.PARK_POSITION and 
-                TELE_SWITCH.get_status() is ButtonStatus.ON
+                SWITCHES["TELE_SWITCH"].get_status() is ButtonStatus.ON
         ):
             TELESCOPE.park()
         elif (
                 request.action is TelescopeAction.FLAT_POSITION and
-                TELE_SWITCH.get_status() is ButtonStatus.ON
+                SWITCHES["TELE_SWITCH"].get_status() is ButtonStatus.ON
         ):
             TELESCOPE.flat()
 
@@ -51,7 +51,7 @@ class TelescopeService(TelescopeServicer):
                 status is TelescopeStatus.PARKED or 
                 (
                     status is TelescopeStatus.FLATTER and 
-                    FLAT_LIGHT.get_status() is ButtonStatus.OFF
+                    SWITCHES["FLAT_LIGHT"].get_status() is ButtonStatus.OFF
                 )
             ):
             TELESCOPE.set_speed(TelescopeSpeed.SPEED_NOT_TRACKING)
@@ -62,8 +62,8 @@ class TelescopeService(TelescopeServicer):
 
         if request.autolight:
             if speed is TelescopeSpeed.SPEED_SLEWING:
-                DOME_LIGHT.on()
+                SWITCHES["DOME_LIGHT"].on()
             else:
-                DOME_LIGHT.off()
+                SWITCHES["DOME_LIGHT"].off()
 
         return response
